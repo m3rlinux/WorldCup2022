@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 #----------------------------------------------------------------------------
-# version     : 0.2.2
+# version     : 0.1.0
 # Created By  : Davide Gibilisco
-# Created Date: 24/08/2022
+# e-mail      : m3rlinux.it@gmail.com
+# Created Date: 30/11/2022
 # ---------------------------------------------------------------------------
 
 """ 
-Presenta le partite odierne e ne mostra il risultato
-----------------
+Programmino che mostra i risutati delle partite di oggi
+
 """  
 
 # ---------------------------------------------------------------------------
@@ -17,15 +18,13 @@ Presenta le partite odierne e ne mostra il risultato
 
 import requests
 import json
-from pprint import pprint
 from time import sleep
 from datetime import date
 import configparser
 import pathlib
 from getpass import getpass
-from icecream import ic
 
-ic.disable()
+__version__ = "0.1.0"
 
 day = int(date.today().strftime("%d")) - 19
 nl = "\n"
