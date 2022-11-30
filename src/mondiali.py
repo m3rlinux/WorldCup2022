@@ -19,14 +19,14 @@ Programmino che mostra i risutati delle partite di oggi
 import requests
 import json
 from time import sleep
-from datetime import date
 import configparser
 import pathlib
 from getpass import getpass
+from datetime import (datetime, timedelta)
 
 __version__ = "0.1.0"
 
-day = int(date.today().strftime("%d")) - 19
+day = int(datetime.now().strftime("%d")) - 19
 nl = "\n"
 url = f"http://api.cup2022.ir/api/v1/bymatch/{day}"
 url_reg = f"http://api.cup2022.ir/api/v1/user"
@@ -35,6 +35,8 @@ headers = {'Content-Type': 'application/json'}
 bot = "WorldCup2022: "
 ok_list = ["si", "yes", "ok", "va bene"]
 no_list = ["no", "ko", "non"]
+date_format = "%m/%d/%Y %H:%M"
+ita_date = "%d/%m/%Y %H:%M"
 
 config = configparser.ConfigParser()
 file = pathlib.Path("worldcup2022.ini")
@@ -161,8 +163,13 @@ while True:
         sleep(1)
         continue
     if "tutte le partite" in match:
-        print(f"{bot}Ecco i risultati di oggi: ")
+        print(f"{nl}{bot}Ecco i risultati di oggi:{nl}")
         for match in matches:
+            eu_date = datetime.strptime(match["local_date"], date_format) - timedelta(hours=2)
+            print(" ______________________________")
+            print(f"| Partita del {datetime.strftime(eu_date, ita_date)} |")
+            #print("################################")
+            print(" ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
             print(f"{match['home_team_en']} - {match['away_team_en']}: ", end= '')
             print(f"{match['home_score']} - {match['away_score']}")
             if not "null" in match['home_scorers']:
@@ -175,10 +182,17 @@ while True:
                 print(f"-> Marcatori {match['away_team_en']}: {', '.join(away_scorers)}")
             else:
                 print(f"-> Marcatori {match['away_team_en']}: nessuno")
-            print("-----")
+            if match["time_elapsed"] == "finished":
+                print(f"-> Partita terminata")
+            elif match["time_elapsed"] == "notstarted":
+                print(f"-> Partita non ancora iniziata")
+            else:
+                print(f"-> Partita in corso, tempo trascorso: {match['time_elapsed']}")
+            print("")
     else:
-        print(f"{bot}Il risultato di {match[2:]} e' di: ", end = '')
         selector = int(choice) - 1
+        eu_date = datetime.strptime(matches[selector]["local_date"], date_format) - timedelta(hours=2)
+        print(f"{nl}{bot}Il risultato di {match[2:]} e' di: ", end = '')
         print(f"{matches[selector]['home_score']} - {matches[selector]['away_score']}")
         if not "null" in matches[selector]['home_scorers']:
             home_scorers = matches[selector]['home_scorers'][0].split(",")
@@ -190,6 +204,13 @@ while True:
             print(f"-> Marcatori {matches[selector]['away_team_en']}: {', '.join(away_scorers)}")
         else:
             print(f"-> Marcatori {matches[selector]['away_team_en']}: nessuno")
+        print(f"-> Partita del {datetime.strftime(eu_date, ita_date)}")
+        if matches[selector]["time_elapsed"] == "finished":
+            print(f"-> Partita terminata")
+        elif matches[selector]["time_elapsed"] == "notstarted":
+            print(f"-> Partita non ancora iniziata")
+        else:
+            print(f"-> Partita in corso, tempo trascorso: {matches[selector]['time_elapsed']}")
 
     sleep(1)
     continua = input(f"{nl}{bot}Vuoi vedere un altro risultato?{nl}{io}: ")
