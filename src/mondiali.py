@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 #----------------------------------------------------------------------------
-# version     : 0.1.0
+# version     : 0.2.0
 # Created By  : Davide Gibilisco
 # e-mail      : m3rlinux.it@gmail.com
 # Created Date: 30/11/2022
 # ---------------------------------------------------------------------------
 
 """ 
-Programmino che mostra i risutati delle partite di oggi
+Programmino che mostra i risultati delle partite 
+del giorno corrente del mondialie Qatar 2022
 
 """  
 
@@ -24,7 +25,7 @@ import pathlib
 from getpass import getpass
 from datetime import (datetime, timedelta)
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 day_start = datetime.strptime("20/11/2022", "%d/%m/%Y")
 now = datetime.now()
