@@ -1,4 +1,4 @@
-[!["Offrimi un caffé"](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/m3rlinux)
+<a href="https://www.buymeacoffee.com/m3rlinux" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 108px !important;" ></a>
 
 # World Cup 2022
 
