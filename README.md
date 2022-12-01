@@ -1,3 +1,5 @@
+[!["Offrimi un caffé"](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/m3rlinux)
+
 # World Cup 2022
 
 Visualizza i risultati delle partite dei mondiali Qatar 2022 in tempo reale.
