@@ -26,7 +26,10 @@ from datetime import (datetime, timedelta)
 
 __version__ = "0.1.0"
 
-day = int(datetime.now().strftime("%d")) - 19
+day_start = datetime.strptime("20/11/2022", "%d/%m/%Y")
+now = datetime.now()
+delta_days = (day_start - now).days
+day = int(abs(delta_days))
 nl = "\n"
 url = f"http://api.cup2022.ir/api/v1/bymatch/{day}"
 url_reg = f"http://api.cup2022.ir/api/v1/user"
@@ -38,12 +41,30 @@ no_list = ["no", "ko", "non"]
 date_format = "%m/%d/%Y %H:%M"
 ita_date = "%d/%m/%Y %H:%M"
 
+def login(email, password):
+    payload_login = {"email": email,
+                    "password": password}
+
+    resp = requests.request("POST", url_login, headers=headers, data=json.dumps(payload_login))
+    if resp.status_code == 200:
+        status = resp.json()["status"]
+        if status == "success":
+            token = resp.json()["data"]["token"]
+            return ("ok", token)
+        else:
+            return ("ko", resp.text)
+    else:
+        return ("ko", resp.text)
+
+
 config = configparser.ConfigParser()
 file = pathlib.Path("worldcup2022.ini")
 if file.exists():
     config.read(file)
     io = config["DEFAULT"]["Name"]
     token = config["DEFAULT"]["APIToken"]
+    email = config["DEFAULT"]["Email"]
+    password = config["DEFAULT"]["Password"]
 else:
     io = input(f"{bot}Ciao sono il bot dei mondiali Qatar 2022, tu come ti chiami?{nl}???: ")
     while True:
@@ -76,35 +97,42 @@ else:
                 "password": password,
                 "passwordConfirm": password}
     try_req = 0
-    while try_req < 4:
-        resp = requests.request("POST", url_reg, headers=headers, data=json.dumps(payload_reg))
-        if resp.status_code == 504:
-            sleep(3)
-            try_req = try_req + 1
-            continue
+    resp = requests.request("POST", url_reg, headers=headers, data=json.dumps(payload_reg))
+    if resp.status_code == 504:
+        while try_req < 4:
+            resp = requests.request("POST", url_reg, headers=headers, data=json.dumps(payload_reg))
+            if resp.status_code == 504:
+                sleep(3)
+                try_req = try_req + 1
+                continue
+            elif resp.status_code == 200:
+                break
+    if resp.status_code != 200:
+        if "shorter than the minimum" in resp.text:
+            print(f"{bot}Scegli una password di almeno 8 caratteri e con qualche numero")
+            uscita = input(f"Premi un tasto per uscire")
+            exit(2)
         else:
-            break
-    if resp.status_code == 200:
-        print(f"{bot}{resp.json()['message']}")
-        print(f"{bot}Eseguo il login")
-        payload_login = {"email": email,
-                    "password": password}
+            print(f"{bot}Qualcosa non ha funzionato durante la registrazione; errore:")
+            print(f"{resp.text}")
+            uscita = input(f"Premi un tasto per uscire")
+            exit(2)
 
-        resp = requests.request("POST", url_login, headers=headers, data=json.dumps(payload_login))
-        status = resp.json()["status"]
-        if status == "success":
-            token = resp.json()["data"]["token"]
-            print(f"{bot}Registrazione avvenuta correttamente")
-    elif "shorter than the minimum" in resp.text:
-        print(f"{bot}Scegli una password di almeno 8 caratteri e con qualche numero")
-        exit(2)
+    print(f"{bot}{resp.json()['message']}")
+    print(f"{bot}Eseguo il login")
+    status, token = login(email, password)
+    if status == "ok":
+        print(f"{bot}Login avvenuto correttamente")
     else:
-        print(f"{bot}Qualcosa non ha funzionato durante la registrazione; errore:")
-        print(f"{resp.text}")
+        print(f"{bot}Qualcosa e' andato storto durante il logine, errore{nl}")
+        print(token)
+        uscita = input(f"Premi un tasto per uscire")
         exit(2)
 
     config['DEFAULT'] = {
                         'Name': io,
+                        'Email': email,
+                        'Password': password,
                         'APIToken': token
                         }
 
@@ -117,6 +145,36 @@ headers = {
           'Authorization': auth,
           'Content-Type': 'application/json'
           }
+
+resp = requests.request("GET", url, headers=headers, data=payload)
+if resp.status_code == 401:
+    print(f"{bot}Sessione scaduta riesegui il login")
+    status, token = login(email, password)
+    if status == "ok":
+        print(f"{bot}Login avvenuto correttamente")
+        config['DEFAULT']["apitoken"] = token
+        auth = f"Bearer {token}"
+        headers = {
+            'Authorization': auth,
+            'Content-Type': 'application/json'
+            }
+    else:
+        print(f"{bot}Qualcosa e' andato storto durante il login, errore:{nl}")
+        print(token)
+        uscita = input(f"Premi un tasto per uscire")
+        exit(2)
+
+    with open(file, 'w') as configfile:
+        config.write(configfile)
+    
+    resp = requests.request("GET", url, headers=headers, data=payload)
+
+if resp.status_code != 200:
+    print(f"{bot}Il server ha restituito un errore:{nl}{resp.text}")
+    uscita = input(f"Premi un tasto per uscire")
+    exit(2)
+
+matches = resp.json()["data"]
 
 comando = input(f"{bot}Ciao {io}! Cosa posso fare per te?{nl}{io}: ")
 while True:
@@ -135,15 +193,6 @@ while True:
                 yesOrNo = input(f"{bot}Non sono programmato per queste cose, quindi vuoi vedere i risultati delle partite di oggi?{nl}{io}: ")
         break
 
-resp = requests.request("GET", url, headers=headers, data=payload)
-if resp.status_code != 200:
-    print(f"{bot}Il server ha restituito un errore:{nl}{resp.text}")
-    exit(2)
-
-matches = resp.json()["data"]
-
-#pprint(matches)
-
 count = 0
 match_list = []
 for match in matches:
@@ -152,14 +201,16 @@ for match in matches:
 
 count = count + 1
 match_list.append(f'{count}. tutte le partite di oggi')
-
+print(f"{nl.join(match_list)}{nl}")
 while True:
-    choice = input(f'{nl.join(match_list)}{nl}{io}: ')
+    choice = input(f"{io}: ")
+    if not choice:
+        continue
     for match in match_list:
         if match.startswith(choice):
             break
     else:
-        print(f"{nl}{bot}Hai inserito una scelta non valida, ritenta...{nl}")
+        print(f"{nl}{bot}Hai inserito una scelta non valida, indica solo il numero relativo alla partita{nl}")
         sleep(1)
         continue
     if "tutte le partite" in match:
@@ -214,7 +265,14 @@ while True:
 
     sleep(1)
     continua = input(f"{nl}{bot}Vuoi vedere un altro risultato?{nl}{io}: ")
-    if continua in ["Si", "si", "Yes", "yes"]:
+    while True:
+        if not continua:
+            continua = input(f"{io}: ")
+        elif continua in ok_list or continua in no_list:
+            break
+        else:
+            continua = input(f"{bot} Non ho capito, rispondi si o no alla domanda precedente{nl}{io}: ")
+    if continua in ok_list:
         continue
     else:
         break
